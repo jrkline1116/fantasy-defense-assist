@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fantasy Defense Assist: D/ST Matchup Grid</title>
+  <meta name="description" content="Fantasy football defense streaming grid: every NFL team's remaining schedule with opponent rank and average D/ST points allowed.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title">
+      <h1>Fantasy Defense Assist</h1>
+      <p class="sub" id="sub">Loading schedule…</p>
+    </div>
+
+    <div class="controls">
+      <label class="toggle">
+        <input type="checkbox" id="hideUnavailable">
+        <span>Hide unavailable</span>
+      </label>
+      <button type="button" class="btn" id="clearUnavailable">Make all available</button>
+    </div>
+  </header>
+
+  <section class="help">
+    <p>
+      Each cell shows the opponent, how that offense ranks for opposing defenses, and the average D/ST
+      points scored against it. <b class="r-bad">1st</b> is the toughest matchup,
+      <b class="r-good">32nd</b> is the best. Click a team to grey it out when it's rostered in your
+      league. Click a week to sort by that week's matchups. Click any matchup to see the game-by-game breakdown.
+    </p>
+  </section>
+
+  <main>
+    <div class="tabs" id="scoringTabs" role="tablist" aria-label="Scoring">
+      <button type="button" role="tab" data-scoring="espn" aria-selected="true">ESPN</button>
+      <button type="button" role="tab" data-scoring="yahoo" aria-selected="false">Yahoo</button>
+      <button type="button" role="tab" data-scoring="sleeper" aria-selected="false">Sleeper</button>
+      <button type="button" class="tab-custom" data-custom aria-haspopup="dialog">Custom <span class="beta">Beta</span></button>
+    </div>
+    <div class="grid-wrap" id="gridWrap">
+      <table class="grid" id="grid" aria-describedby="sub"></table>
+    </div>
+    <p class="status" id="status" hidden></p>
+  </main>
+
+  <footer class="foot">
+    <p>
+      Rankings use <span id="scoringNote">ESPN default D/ST scoring</span>, season to date, calculated
+      from public box scores. They may differ slightly from each site's own numbers. Updated every Tuesday morning.
+    </p>
+  </footer>
+
+  <dialog id="detail" class="detail" aria-labelledby="detailTitle">
+    <button type="button" class="d-close" aria-label="Close">✕</button>
+    <div id="detailBody"></div>
+  </dialog>
+
+  <dialog id="customDialog" class="detail custom" aria-labelledby="customTitle">
+    <button type="button" class="d-close c-close" aria-label="Close">✕</button>
+    <div id="customBody"></div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
