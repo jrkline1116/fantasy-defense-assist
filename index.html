@@ -19,11 +19,12 @@
     </div>
 
     <div class="controls">
-      <label class="toggle">
-        <input type="checkbox" id="hideUnavailable">
-        <span>Hide unavailable</span>
+      <label class="switch">
+        <input type="checkbox" role="switch" id="hideUnavailable">
+        <span class="track" aria-hidden="true"><span class="knob"></span></span>
+        <span class="sw-label">Hide taken <span id="takenCount" class="count">(0)</span></span>
       </label>
-      <button type="button" class="btn" id="clearUnavailable">Make all available</button>
+      <button type="button" class="btn" id="clearUnavailable">Clear taken</button>
     </div>
   </header>
 
@@ -31,8 +32,7 @@
     <p>
       Each cell shows the opponent, how that offense ranks for opposing defenses, and the average D/ST
       points scored against it. <b class="r-bad">1st</b> is the toughest matchup,
-      <b class="r-good">32nd</b> is the best. Click a team to grey it out when it's rostered in your
-      league. Click a week to sort by that week's matchups. Click any matchup to see the game-by-game breakdown.
+      <b class="r-good">32nd</b> is the best. Click a team to mark it taken in your league, then flip <b>Hide taken</b> to hide or show those teams. Click a week to sort by that week's matchups. Click any matchup to see the game-by-game breakdown.
     </p>
   </section>
 

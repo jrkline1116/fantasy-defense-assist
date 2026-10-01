@@ -37,6 +37,7 @@ const els = {
   sub: $('sub'),
   status: $('status'),
   hide: $('hideUnavailable'),
+  takenCount: $('takenCount'),
   scoringNote: $('scoringNote'),
   tabs: $('scoringTabs'),
   custom: $('customDialog'),
@@ -240,6 +241,7 @@ function render() {
   const table = els.grid;
   table.textContent = '';
   table.classList.toggle('hide-unavailable', els.hide.checked);
+  els.takenCount.textContent = `(${state.unavailable.size})`;
 
   const thead = table.createTHead();
   const hr = thead.insertRow();
@@ -258,7 +260,7 @@ function render() {
     btn.className = 'team';
     const isOut = state.unavailable.has(t);
     btn.setAttribute('aria-pressed', String(isOut));
-    btn.title = isOut ? 'Rostered in your league. Click to mark available.' : 'Click if rostered in your league';
+    btn.title = isOut ? 'Taken in your league. Click to mark available.' : 'Click to mark as taken in your league';
     btn.innerHTML =
       (teams[t].logo ? `<img src="${teams[t].logo}" alt="" loading="lazy">` : '') +
       `<span><span class="nm">${teams[t].short}</span><span class="ab">${t} D/ST</span></span>` +
