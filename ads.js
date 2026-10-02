@@ -3,9 +3,9 @@
 const ADSENSE = {
   client: 'ca-pub-5134360334819238',
   slots: {
-    top: '',     // responsive display unit, above the scoring tabs
-    bottom: '',  // responsive display unit, below the grid
-    side: '',    // fixed 160x600 unit, shown left and right on wide screens only
+    top: '5815182387',     // responsive display unit, above the scoring tabs
+    bottom: '2878117144',  // responsive display unit, below the grid
+    side: '4933345557',    // fixed 160x600 unit, shown left and right on wide screens only
   },
 };
 
