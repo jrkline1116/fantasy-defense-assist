@@ -52,10 +52,11 @@ const state = {
   weeks: [],
   teams: [],          // abbrs in display order
   ranks: {},          // offense abbr -> { rank, avg, games }
+  dstRanks: {},       // defense abbr -> { rank, total, games, avg } (points the D/ST scored)
   logs: {},           // offense abbr -> week -> game stats + pts
   nflAvg: 0,
   matchups: {},       // week -> team -> { opp, home }
-  sort: { key: 'team', dir: 'asc' },
+  sort: { key: 'prk', dir: 'asc' },   // 'prk' (D/ST rank), 'team' (A–Z) or a week number
   scoringKey: 'espn',
   unavailable: new Set(),
   storageKey: 'dst-grid',
@@ -77,6 +78,7 @@ function scoreGame(g, s = SCORING) {
 function computeRanks(results, teamAbbrs) {
   const totals = Object.fromEntries(teamAbbrs.map((t) => [t, { sum: 0, games: 0 }]));
   const logs = Object.fromEntries(teamAbbrs.map((t) => [t, {}]));
+  const defTotals = Object.fromEntries(teamAbbrs.map((t) => [t, { sum: 0, games: 0 }]));
   let leagueSum = 0, leagueGames = 0;
 
   for (const r of Object.values(results)) {
@@ -89,6 +91,12 @@ function computeRanks(results, teamAbbrs) {
       leagueSum += pts;
       leagueGames += 1;
       logs[off][r.week] = { ...g, pts };
+      // The same stat line is what the opposing defense scored.
+      const def = off === r.home ? r.away : off === r.away ? r.home : null;
+      if (def && defTotals[def]) {
+        defTotals[def].sum += pts;
+        defTotals[def].games += 1;
+      }
     }
   }
   const rows = teamAbbrs
@@ -102,7 +110,17 @@ function computeRanks(results, teamAbbrs) {
     const better = rows.filter((o) => Math.round(o.avg * 10) < shown).length;
     ranks[row.t] = { rank: better + 1, avg: row.avg, games: row.games };
   }
-  return { ranks, logs, nflAvg: leagueGames ? leagueSum / leagueGames : 0 };
+
+  // D/ST position rank (like ESPN's PRK): total fantasy points this season, most = 1st.
+  const dRows = teamAbbrs.filter((t) => defTotals[t].games > 0);
+  const dstRanks = {};
+  for (const t of dRows) {
+    const shown = Math.round(defTotals[t].sum * 10);
+    const better = dRows.filter((o) => Math.round(defTotals[o].sum * 10) > shown).length;
+    dstRanks[t] = { rank: better + 1, total: defTotals[t].sum, games: defTotals[t].games,
+      avg: defTotals[t].sum / defTotals[t].games };
+  }
+  return { ranks, logs, dstRanks, nflAvg: leagueGames ? leagueSum / leagueGames : 0 };
 }
 
 /* ---------- data shaping ---------- */
@@ -157,6 +175,17 @@ function sortTeams() {
     state.teams.sort((a, b) => (dir === 'asc' ? byName(a, b) : byName(b, a)));
     return;
   }
+  if (key === 'prk') {
+    const tot = (t) => state.dstRanks[t]?.total ?? null;
+    state.teams.sort((a, b) => {
+      const va = tot(a), vb = tot(b);
+      if (va == null && vb == null) return byName(a, b);
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return dir === 'asc' ? vb - va || byName(a, b) : va - vb || byName(a, b);
+    });
+    return;
+  }
   const week = key;
   const value = (t) => {
     const m = state.matchups[week]?.[t];
@@ -174,11 +203,11 @@ function sortTeams() {
 
 function setSort(key) {
   if (state.sort.key === key) {
-    if (key === 'team') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+    if (key === 'team' || key === 'prk') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
     else state.sort.dir = state.sort.dir === 'desc' ? 'asc' : 'desc';
   } else {
-    // Week columns open with best matchups (green) on top.
-    state.sort = { key, dir: key === 'team' ? 'asc' : 'desc' };
+    // Rank opens with 1st on top, A–Z with A on top, weeks with best matchups on top.
+    state.sort = { key, dir: key === 'team' || key === 'prk' ? 'asc' : 'desc' };
   }
   sortTeams();
   render();
@@ -203,6 +232,32 @@ function headerCell(label, key, extraClass = '') {
   btn.innerHTML = `<span>${label}</span><span class="arrow" aria-hidden="true">${arrow}</span>`;
   btn.addEventListener('click', () => setSort(key));
   th.append(btn);
+  return th;
+}
+
+function cornerCell() {
+  const th = document.createElement('th');
+  th.scope = 'col';
+  th.className = 'corner';
+  const wrap = document.createElement('div');
+  wrap.className = 'corner-in';
+  wrap.innerHTML = '<span class="corner-lbl">Defense</span>';
+  const opts = [['prk', 'Rank', 'Sort by points scored this season (D/ST rank)'], ['team', 'A–Z', 'Sort by team name']];
+  for (const [key, label, title] of opts) {
+    const active = state.sort.key === key;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'corner-sort';
+    b.title = title + (active ? '. Click again to reverse.' : '');
+    b.setAttribute('aria-pressed', String(active));
+    b.innerHTML = label + (active ? `<span class="arrow" aria-hidden="true">${state.sort.dir === 'asc' ? '▲' : '▼'}</span>` : '');
+    b.addEventListener('click', () => setSort(key));
+    wrap.append(b);
+  }
+  if (state.sort.key === 'prk' || state.sort.key === 'team') {
+    th.setAttribute('aria-sort', state.sort.dir === 'asc' ? 'ascending' : 'descending');
+  }
+  th.append(wrap);
   return th;
 }
 
@@ -245,7 +300,7 @@ function render() {
 
   const thead = table.createTHead();
   const hr = thead.insertRow();
-  hr.append(headerCell('Defense', 'team', 'corner'));
+  hr.append(cornerCell());
   for (const w of state.weeks) hr.append(headerCell(`Week ${w}`, w));
 
   const tbody = table.createTBody();
@@ -260,10 +315,15 @@ function render() {
     btn.className = 'team';
     const isOut = state.unavailable.has(t);
     btn.setAttribute('aria-pressed', String(isOut));
-    btn.title = isOut ? 'Taken in your league. Click to mark available.' : 'Click to mark as taken in your league';
+    const d = state.dstRanks[t];
+    const rankLine = d
+      ? `${ordinal(d.rank)} in ${SCORING.label} scoring: ${fmt(d.total)} pts in ${d.games} game${d.games === 1 ? '' : 's'} (${fmt(d.avg)} avg). `
+      : '';
+    btn.title = rankLine + (isOut ? 'Taken in your league. Click to mark available.' : 'Click to mark as taken in your league.');
     btn.innerHTML =
       (teams[t].logo ? `<img src="${teams[t].logo}" alt="" loading="lazy">` : '') +
-      `<span><span class="nm">${teams[t].short}</span><span class="ab">${t} D/ST</span></span>` +
+      `<span class="who"><span class="nm">${teams[t].short}</span><span class="ab">${t} D/ST</span></span>` +
+      (d ? `<span class="prk"><span class="prk-n">${ordinal(d.rank)}</span><span class="prk-p">${fmt(d.total)} pts</span></span>` : '') +
       `<span class="flag">Taken</span>`;
     btn.addEventListener('click', () => toggleTeam(t));
     th.append(btn);
@@ -351,7 +411,7 @@ function openDetail(off) {
 
 function applyScoring() {
   SCORING = PRESETS[state.scoringKey] ?? PRESETS.espn;
-  ({ ranks: state.ranks, logs: state.logs, nflAvg: state.nflAvg } =
+  ({ ranks: state.ranks, logs: state.logs, dstRanks: state.dstRanks, nflAvg: state.nflAvg } =
     computeRanks(state.data.results ?? {}, Object.keys(state.data.teams)));
   els.scoringNote.textContent = `${SCORING.label} default D/ST scoring`;
   for (const tab of els.tabs.querySelectorAll('[data-scoring]')) {
