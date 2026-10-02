@@ -54,9 +54,10 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px 24px;
-  padding: 20px clamp(12px, 3vw, 32px) 8px;
+  padding: 24px clamp(12px, 3vw, 32px) 8px;
+  text-align: center;
 }
 
 h1 {
@@ -127,8 +128,10 @@ h1 {
   padding: 0 clamp(12px, 3vw, 32px);
   color: var(--muted);
   max-width: 78ch;
+  margin: 0 auto;
+  text-align: center;
 }
-.help p { margin: 4px 0 14px; }
+.help p { margin: 6px 0 18px; }
 .r-bad { color: var(--bad); }
 .r-good { color: var(--good); }
 
@@ -257,6 +260,8 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
   color: var(--muted);
   font-size: 13px;
   max-width: 90ch;
+  margin: 0 auto;
+  text-align: center;
 }
 
 @media (max-width: 640px) {
@@ -384,6 +389,7 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 /* tabs + hide-taken controls share one row */
 .bar {
   display: flex; flex-wrap: wrap; align-items: flex-end;
+  justify-content: space-between;
   gap: 8px 18px;
 }
 .bar .controls { padding-bottom: 6px; }
@@ -397,13 +403,23 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 /* how it works + footer links + privacy page */
 .about {
   max-width: 78ch;
-  padding: 20px clamp(12px, 3vw, 32px) 0;
+  margin: 0 auto;
+  padding: 24px clamp(12px, 3vw, 32px) 0;
+}
+/* wide screens: the two explainer sections sit side by side under the grid */
+@media (min-width: 1100px) {
+  .about {
+    max-width: 1240px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 56px;
+  }
 }
 .about h2 { margin: 18px 0 6px; font: 700 24px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
 .about p { margin: 0 0 12px; }
 .foot .links { margin-top: 6px; }
 .foot a, .about a, .page a { color: var(--focus); }
-.page { max-width: 78ch; padding: 24px clamp(12px, 3vw, 32px) 40px; }
+.page { max-width: 78ch; margin: 0 auto; padding: 24px clamp(12px, 3vw, 32px) 40px; }
 .page h1 { margin-bottom: 4px; }
 .page h2 { margin: 22px 0 6px; font: 700 22px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
 .page p, .page li { margin: 0 0 10px; }
