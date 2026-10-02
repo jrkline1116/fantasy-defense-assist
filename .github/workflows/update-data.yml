@@ -3,6 +3,7 @@ name: Update defense data
 on:
   schedule:
     - cron: '0 12 * * 2'    # Tuesdays, 5am Arizona time (after Monday Night Football)
+    - cron: '0 12 * * 5'    # Fridays, 5am Arizona time (picks up Thursday Night Football)
   workflow_dispatch:        # adds a "Run workflow" button on the Actions tab
 
 permissions:
@@ -12,10 +13,10 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
       - run: node scripts/build-data.mjs
       - name: Commit if changed
         run: |
