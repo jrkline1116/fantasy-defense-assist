@@ -13,6 +13,7 @@ const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT_FILE = path.join(ROOT, 'data', 'defense.json');
 const WEEKS = 18;
+const DATA_VERSION = 2;   // bump when parseSummary changes so stored games are re-fetched
 
 const now = new Date();
 const SEASON = Number(process.env.SEASON) ||
@@ -69,10 +70,21 @@ const firstNum = (v) => {
 };
 
 // Scoring plays that count as a D/ST touchdown for the team that scored them.
-export function isDstTouchdown(text = '') {
-  return /touchdown/i.test(text) &&
-    /(interception|fumble|punt|kickoff|kick off|blocked|missed field goal|return)/i.test(text) &&
-    !/\bown\b/i.test(text);
+// Checks ESPN's play type AND the play description (minus the PAT in parentheses),
+// because some return TDs are typed as e.g. "Fumble Recovery (Opponent)".
+const DST_WORDS = /(interception|intercepted|fumble|punt|kickoff|kick off|kicks|blocked|missed field goal|return)/i;
+export function isDstTouchdown(typeText = '', playText = '') {
+  if (/\bown\b/i.test(typeText)) return false;
+  if (/fumble recovery \(opponent\)/i.test(typeText)) return true;
+  const desc = String(playText).replace(/\([^)]*\)/g, ' ');
+  const isTd = /touchdown/i.test(typeText) || /touchdown/i.test(playText);
+  return isTd && (DST_WORDS.test(typeText) || DST_WORDS.test(desc));
+}
+
+// A blocked punt, field goal or extra point, from the play-by-play text.
+export function isBlockedKick(typeText = '', playText = '') {
+  const t = `${typeText} ${playText}`;
+  return /blocked/i.test(t) && /(punt|field goal|extra point|kick|\bfg\b|\bpat\b)/i.test(t);
 }
 
 // Returns { [offenseAbbr]: {pa, ya, sacks, ints, fumLost, defTd, safeties} }
@@ -98,7 +110,18 @@ export function parseSummary(summary, game) {
     if (!(scorer in tds)) continue;
     const text = p.type?.text ?? '';
     if (/safety/i.test(text)) safeties[scorer]++;
-    else if (isDstTouchdown(text)) tds[scorer]++;
+    else if (isDstTouchdown(text, p.text ?? '')) tds[scorer]++;
+  }
+
+  // Blocked kicks: the drive's team kicked, so the other team gets the block.
+  const blocks = { [home.abbr]: 0, [away.abbr]: 0 };
+  for (const d of summary.drives?.previous ?? []) {
+    const kicker = idToAbbr[String(d.team?.id)] ?? d.team?.abbreviation;
+    const blocker = opp[kicker];
+    if (!blocker) continue;
+    for (const pl of d.plays ?? []) {
+      if (isBlockedKick(pl.type?.text ?? '', pl.text ?? '')) blocks[blocker]++;
+    }
   }
 
   const out = {};
@@ -113,6 +136,7 @@ export function parseSummary(summary, game) {
       fumLost: firstNum(s.fumblesLost),
       defTd: tds[def],
       safeties: safeties[def],
+      blocks: blocks[def],
     };
   }
   return out;
@@ -151,7 +175,7 @@ async function main() {
   const results = {};
   let fetched = 0, reused = 0, incomplete = 0;
   for (const g of schedule.filter((x) => x.completed)) {
-    if (isComplete(previous[g.id]?.off)) {
+    if (previous[g.id]?.v === DATA_VERSION && isComplete(previous[g.id]?.off)) {
       results[g.id] = previous[g.id];
       reused++;
       continue;
@@ -162,7 +186,7 @@ async function main() {
       incomplete++;
       console.warn(`Week ${g.week} ${g.away.abbr}@${g.home.abbr}: missing stats`, JSON.stringify(off));
     }
-    results[g.id] = { week: g.week, home: g.home.abbr, away: g.away.abbr, off };
+    results[g.id] = { v: DATA_VERSION, week: g.week, home: g.home.abbr, away: g.away.abbr, off };
     fetched++;
     await sleep(300);
   }

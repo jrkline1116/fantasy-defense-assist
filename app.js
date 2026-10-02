@@ -5,14 +5,14 @@
 // Default D/ST scoring by platform. Tables are [max inclusive, points];
 // an empty table means the category isn't scored.
 const YAHOO_STYLE = {
-  sack: 1, int: 2, fumRec: 2, td: 6, safety: 2,
+  sack: 1, int: 2, fumRec: 2, td: 6, safety: 2, block: 2,
   pointsAllowed: [[0, 10], [6, 7], [13, 4], [20, 1], [27, 0], [34, -1], [Infinity, -4]],
   yardsAllowed: [],
 };
 const PRESETS = {
   espn: {
     label: 'ESPN',
-    sack: 1, int: 2, fumRec: 2, td: 6, safety: 2,
+    sack: 1, int: 2, fumRec: 2, td: 6, safety: 2, block: 2,
     pointsAllowed: [[0, 5], [6, 4], [13, 3], [17, 1], [27, 0], [34, -1], [45, -3], [Infinity, -5]],
     yardsAllowed: [[99, 5], [199, 3], [299, 2], [349, 0], [399, -1], [449, -3], [499, -5], [549, -6], [Infinity, -7]],
   },
@@ -71,7 +71,7 @@ function tier(table, value) {
 
 function scoreGame(g, s = SCORING) {
   return g.sacks * s.sack + g.ints * s.int + g.fumLost * s.fumRec +
-    g.defTd * s.td + g.safeties * s.safety +
+    g.defTd * s.td + g.safeties * s.safety + (g.blocks ?? 0) * (s.block ?? 0) +
     tier(s.pointsAllowed, g.pa) + tier(s.yardsAllowed, g.ya);
 }
 
@@ -323,7 +323,7 @@ function render() {
     btn.innerHTML =
       (teams[t].logo ? `<img src="${teams[t].logo}" alt="" loading="lazy">` : '') +
       `<span class="who"><span class="nm">${teams[t].short}</span><span class="ab">${t} D/ST</span></span>` +
-      (d ? `<span class="prk"><span class="prk-n">${ordinal(d.rank)}</span><span class="prk-p">${fmt(d.total)} pts</span></span>` : '') +
+      (d ? `<span class="prk"><span class="prk-n">${ordinal(d.rank)}</span><span class="prk-p">${fmt(d.total)} pts (${fmt(d.avg)})</span></span>` : '') +
       `<span class="flag">Taken</span>`;
     btn.addEventListener('click', () => toggleTeam(t));
     th.append(btn);
