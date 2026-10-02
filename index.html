@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5134360334819238" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -34,8 +34,8 @@
   </header>
 
   <section class="legend" aria-label="How to read the grid">
-    <svg class="lg-anno" viewBox="180 0 320 150" role="img" aria-labelledby="annoTitle">
-      <title id="annoTitle">Sample cell: opponent at top, average D/ST points scored against that offense at bottom right.</title>
+    <svg class="lg-anno" viewBox="0 0 500 150" role="img" aria-labelledby="annoTitle">
+      <title id="annoTitle">Sample cell: opponent at top, opponent rank versus D/STs at bottom left (1st toughest, 32nd best), average D/ST points scored against that offense at bottom right.</title>
       <defs>
         <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0 L10 5 L0 10 z" class="a-head"/>
@@ -48,6 +48,10 @@
 
       <path d="M324 24 C 296 20, 276 30, 268 50" class="a-line" marker-end="url(#ah)"/>
       <text x="330" y="29" class="a-lbl">Opponent</text>
+
+      <path d="M178 124 C 198 124, 210 116, 217 102" class="a-line" marker-end="url(#ah)"/>
+      <text x="172" y="122" text-anchor="end" class="a-avg">Opponent rank vs. D/STs</text>
+      <text x="172" y="141" text-anchor="end" class="a-avg">1st toughest, 32nd best</text>
 
       <path d="M312 124 C 292 124, 280 116, 273 102" class="a-line" marker-end="url(#ah)"/>
       <text x="318" y="122" class="a-avg">Avg D/ST points</text>
@@ -157,7 +161,7 @@
     <div id="customBody"></div>
   </dialog>
 
-  <script src="app.js?v=5"></script>
-  <script src="ads.js?v=5"></script>
+  <script src="app.js?v=6"></script>
+  <script src="ads.js?v=6"></script>
 </body>
 </html>
