@@ -12,6 +12,8 @@ scored against that offense, season to date.
 | `scripts/build-data.mjs` | Pulls the schedule and box scores from ESPN's public endpoints and writes `data/defense.json`. |
 | `.github/workflows/update-data.yml` | Runs the script every Tuesday at 5am Arizona time and commits new data. Use "Run workflow" for a manual update anytime. |
 | `data/defense.json` | Generated. Don't edit by hand. |
+| `ads.js` | Ad slot IDs. Slots stay hidden until an ID is filled in. |
+| `ads.txt` | AdSense publisher record. |
 | `privacy.html` | Privacy policy (required for AdSense). |
 | `robots.txt`, `sitemap.xml` | Help Google find and index the site. |
 | `CNAME` | Points GitHub Pages at fantasydefenseassist.com. |

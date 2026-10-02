@@ -408,3 +408,23 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 .page h2 { margin: 22px 0 6px; font: 700 22px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
 .page p, .page li { margin: 0 0 10px; }
 .page .back { display: inline-block; margin-bottom: 16px; }
+
+/* ---------- ad slots (invisible until a slot ID is set in ads.js) ---------- */
+.ad { display: none; }
+.ad.ad-on { display: block; text-align: center; }
+.ad-top.ad-on { margin: 0 0 14px; min-height: 90px; }
+.ad-bottom.ad-on { margin: 16px 0 0; min-height: 90px; }
+.ad-rail { display: none !important; }
+@media (min-width: 1500px) {
+  body.has-rails { padding-left: 190px; padding-right: 190px; }
+  body.has-rails .ad-rail.ad-on {
+    display: block !important;
+    position: fixed; top: 90px;
+    width: 160px; height: 600px;
+  }
+  body.has-rails .ad-rail-left { left: 15px; }
+  body.has-rails .ad-rail-right { right: 15px; }
+}
+@media (max-width: 640px) {
+  .ad-top.ad-on, .ad-bottom.ad-on { min-height: 50px; }
+}

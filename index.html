@@ -21,6 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5134360334819238" crossorigin="anonymous"></script>
 </head>
 <body>
   <header class="top">
@@ -41,6 +42,8 @@
   </section>
 
   <main>
+    <div class="ad ad-top" data-ad="top"></div>
+
     <div class="bar">
     <div class="tabs" id="scoringTabs" role="tablist" aria-label="Scoring">
       <button type="button" role="tab" data-scoring="espn" aria-selected="true">ESPN</button>
@@ -62,7 +65,12 @@
       <table class="grid" id="grid" aria-describedby="sub"></table>
     </div>
     <p class="status" id="status" hidden></p>
+
+    <div class="ad ad-bottom" data-ad="bottom"></div>
   </main>
+
+  <aside class="ad ad-rail ad-rail-left" data-ad="side" aria-label="Advertisement"></aside>
+  <aside class="ad ad-rail ad-rail-right" data-ad="side" aria-label="Advertisement"></aside>
 
   <section class="about" id="how-it-works">
     <h2>How to use it for streaming defenses</h2>
@@ -119,5 +127,6 @@
   </dialog>
 
   <script src="app.js"></script>
+  <script src="ads.js"></script>
 </body>
 </html>
