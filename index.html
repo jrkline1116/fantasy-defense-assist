@@ -3,8 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Fantasy Defense Assist: D/ST Matchup Grid</title>
-  <meta name="description" content="Fantasy football defense streaming grid: every NFL team's remaining schedule with opponent rank and average D/ST points allowed.">
+  <title>Fantasy Defense Assist: Your Go-To Resource for Streaming Defenses Weekly</title>
+  <meta name="description" content="Your go-to resource for streaming defenses weekly. Look ahead at every D/ST's rest-of-season matchups to plan which defenses to pick up and stash. Free for ESPN, Yahoo and Sleeper scoring.">
+  <link rel="canonical" href="https://fantasydefenseassist.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Fantasy Defense Assist">
+  <meta property="og:title" content="Fantasy Defense Assist: Your Go-To Resource for Streaming Defenses Weekly">
+  <meta property="og:description" content="Look ahead to plan which D/STs to pick up and stash. Every defense's remaining matchups, ranked for ESPN, Yahoo and Sleeper scoring.">
+  <meta property="og:url" content="https://fantasydefenseassist.com/">
+  <meta name="twitter:card" content="summary">
+  <meta name="keywords" content="fantasy football, streaming defenses, D/ST streaming, defense streamers, fantasy defense rankings, D/ST strength of schedule, defense pickups, waiver wire defense">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"Fantasy Defense Assist","url":"https://fantasydefenseassist.com/","applicationCategory":"SportsApplication","operatingSystem":"Any","description":"Your go-to resource for streaming defenses weekly. Look ahead at rest-of-season D/ST matchups to plan which defenses to pick up and stash, for ESPN, Yahoo and Sleeper scoring.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+  </script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,17 +26,10 @@
   <header class="top">
     <div class="title">
       <h1>Fantasy Defense Assist</h1>
+      <p class="tagline">Your go-to resource for streaming defenses weekly! Look ahead to plan which D/STs to pick up and stash.</p>
       <p class="sub" id="sub">Loading schedule…</p>
     </div>
 
-    <div class="controls">
-      <label class="switch">
-        <input type="checkbox" role="switch" id="hideUnavailable">
-        <span class="track" aria-hidden="true"><span class="knob"></span></span>
-        <span class="sw-label">Hide taken <span id="takenCount" class="count">(0)</span></span>
-      </label>
-      <button type="button" class="btn" id="clearUnavailable">Clear taken</button>
-    </div>
   </header>
 
   <section class="help">
@@ -37,23 +41,71 @@
   </section>
 
   <main>
+    <div class="bar">
     <div class="tabs" id="scoringTabs" role="tablist" aria-label="Scoring">
       <button type="button" role="tab" data-scoring="espn" aria-selected="true">ESPN</button>
       <button type="button" role="tab" data-scoring="yahoo" aria-selected="false">Yahoo</button>
       <button type="button" role="tab" data-scoring="sleeper" aria-selected="false">Sleeper</button>
       <button type="button" class="tab-custom" data-custom aria-haspopup="dialog">Custom <span class="beta">Beta</span></button>
     </div>
+      <div class="controls">
+        <label class="switch">
+          <input type="checkbox" role="switch" id="hideUnavailable">
+          <span class="track" aria-hidden="true"><span class="knob"></span></span>
+          <span class="sw-label">Hide taken <span id="takenCount" class="count">(0)</span></span>
+        </label>
+        <button type="button" class="btn" id="clearUnavailable">Clear taken</button>
+      </div>
+    </div>
+
     <div class="grid-wrap" id="gridWrap">
       <table class="grid" id="grid" aria-describedby="sub"></table>
     </div>
     <p class="status" id="status" hidden></p>
   </main>
 
+  <section class="about" id="how-it-works">
+    <h2>How to use it for streaming defenses</h2>
+    <p>
+      Each week, look down the next week's column for green cells. Green means the defense is facing
+      an offense that opposing D/STs have scored well against this season, so it's a strong streaming
+      pickup. Red means opposing defenses have struggled against that offense, so it's one to avoid.
+      Click the week's header to sort the best matchups to the top, mark the teams already rostered
+      in your league, and flip <b>Hide taken</b> to see only the defenses you can actually claim.
+    </p>
+    <p>
+      To stash a defense, look further ahead. A team with a run of green cells two or three weeks
+      out, or a strong matchup during the fantasy playoffs, is worth picking up before the rest of
+      your league notices. Byes are marked so you can plan around them.
+    </p>
+
+    <h2>How the rankings are calculated</h2>
+    <p>
+      For every game played this season, we score the defense that faced each offense using
+      standard fantasy D/ST rules: sacks, interceptions, fumble recoveries, defensive and return
+      touchdowns, safeties, and points allowed. Each offense's average is ranked from 1st (defenses
+      score the fewest points against it) to 32nd (defenses score the most). Click any matchup to see
+      the game-by-game breakdown behind the number.
+    </p>
+    <p>
+      The tabs switch between each platform's default scoring. ESPN also scores yards allowed and
+      uses smaller points-allowed bonuses. Yahoo and Sleeper use the same defaults as each other:
+      bigger bonuses for holding an offense to a low score and no yards-allowed scoring. That's why
+      an offense can rank differently from one tab to the next.
+    </p>
+    <p>
+      Data comes from public NFL box scores and updates every Tuesday morning after Monday Night
+      Football. Ranks can differ slightly from each site's own numbers because blocked kicks and
+      2-point returns aren't included.
+    </p>
+  </section>
+
   <footer class="foot">
     <p>
       Rankings use <span id="scoringNote">ESPN default D/ST scoring</span>, season to date, calculated
       from public box scores. They may differ slightly from each site's own numbers. Updated every Tuesday morning.
     </p>
+    <p class="links"><a href="#how-it-works">How it works</a> · <a href="privacy.html">Privacy policy</a></p>
   </footer>
 
   <dialog id="detail" class="detail" aria-labelledby="detailTitle">

@@ -65,7 +65,8 @@ h1 {
   letter-spacing: .01em;
 }
 
-.sub { margin: 6px 0 0; color: var(--muted); }
+.tagline { margin: 6px 0 0; font-size: 17px; font-weight: 500; }
+.sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
@@ -378,3 +379,32 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 .btn.primary { background: var(--head); color: var(--head-ink); border-color: var(--head); text-decoration: none; font-weight: 600; }
 .btn.primary:disabled { opacity: .55; cursor: not-allowed; }
 .c-note { color: var(--muted); font-size: 13px; }
+.custom .price-soon { font: 600 20px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; margin: 14px 0 0; }
+
+/* tabs + hide-taken controls share one row */
+.bar {
+  display: flex; flex-wrap: wrap; align-items: flex-end;
+  gap: 8px 18px;
+}
+.bar .controls { padding-bottom: 6px; }
+.bar .tabs { order: 0; }
+.bar .controls { order: 1; }
+@media (max-width: 640px) {
+  .bar { flex-direction: column-reverse; align-items: stretch; }
+  .bar .controls { padding: 0 4px 4px; }
+}
+
+/* how it works + footer links + privacy page */
+.about {
+  max-width: 78ch;
+  padding: 20px clamp(12px, 3vw, 32px) 0;
+}
+.about h2 { margin: 18px 0 6px; font: 700 24px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.about p { margin: 0 0 12px; }
+.foot .links { margin-top: 6px; }
+.foot a, .about a, .page a { color: var(--focus); }
+.page { max-width: 78ch; padding: 24px clamp(12px, 3vw, 32px) 40px; }
+.page h1 { margin-bottom: 4px; }
+.page h2 { margin: 22px 0 6px; font: 700 22px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.page p, .page li { margin: 0 0 10px; }
+.page .back { display: inline-block; margin-bottom: 16px; }

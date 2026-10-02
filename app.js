@@ -25,7 +25,7 @@ let SCORING = PRESETS.espn;
 // a checkout link (Stripe Payment Link, Buy Me a Coffee membership, etc.).
 const CUSTOM = {
   price: '$X.XX',
-  checkoutUrl: '',   // empty = button shows "Payments open soon"
+  checkoutUrl: '',   // not used yet; popup says pricing is coming later
 };
 
 // ESPN-style colors: low ranks red, high ranks green.
@@ -369,19 +369,15 @@ function selectScoring(key) {
 }
 
 function openCustom() {
-  const ready = !!CUSTOM.checkoutUrl;
   els.customBody.innerHTML = `
     <span class="beta">Beta</span>
     <h2 id="customTitle">Import your league's defensive rules?</h2>
     <p>Enter your league's D/ST scoring once (sacks, turnovers, points allowed, yards allowed)
       and every rank, average and breakdown on the grid recalculates to match. Save each league
       under its own name and switch between them with a tab.</p>
-    <p class="price"><span>${CUSTOM.price}</span> to unlock custom scoring</p>
+    <p class="price-soon">Pricing options coming at a later date.</p>
     <div class="c-actions">
-      ${ready
-        ? `<a class="btn primary" href="${CUSTOM.checkoutUrl}" target="_blank" rel="noopener">Unlock for ${CUSTOM.price}</a>`
-        : `<button type="button" class="btn primary" disabled>Payments open soon</button>`}
-      <button type="button" class="btn c-close">Not now</button>
+      <button type="button" class="btn primary c-close">Got it</button>
     </div>
     <p class="c-note">Custom scoring is a beta feature and may change as we improve it.</p>`;
   els.custom.showModal();
