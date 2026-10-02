@@ -460,7 +460,7 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 }
 .legend ul { list-style: none; margin: 0; padding: 0; }
 
-.lg-anno { display: block; width: 452px; max-width: 100%; height: auto; overflow: visible; }
+.lg-anno { display: block; width: 320px; max-width: 100%; height: auto; overflow: visible; }
 .a-cell { fill: var(--good-tint); stroke: var(--line-strong); stroke-width: 1; }
 .a-opp { fill: var(--ink); font: 600 22px "Barlow Condensed", "Arial Narrow", sans-serif; }
 .a-rk  { fill: var(--good); font: 700 19px "Barlow Condensed", "Arial Narrow", sans-serif; }
