@@ -11,6 +11,9 @@ const ADSENSE = {
 
 (function placeAds() {
   const wide = window.matchMedia('(min-width: 1500px)');
+  // Phones get a fixed 320x100 banner. A responsive unit on a phone can grow
+  // to a full-screen-tall square, which buries the grid.
+  const phone = window.matchMedia('(max-width: 767px)').matches;
   let railsShown = false;
 
   function fill(el, slot, fixed) {
@@ -19,11 +22,11 @@ const ADSENSE = {
     ins.dataset.adClient = ADSENSE.client;
     ins.dataset.adSlot = slot;
     if (fixed) {
-      ins.style.cssText = 'display:inline-block;width:160px;height:600px';
+      ins.style.cssText = `display:inline-block;width:${fixed[0]}px;height:${fixed[1]}px`;
     } else {
       ins.style.display = 'block';
       ins.dataset.adFormat = 'horizontal';
-      ins.dataset.fullWidthResponsive = 'true';
+      ins.dataset.fullWidthResponsive = 'false';
     }
     el.append(ins);
     el.classList.add('ad-on');
@@ -32,7 +35,7 @@ const ADSENSE = {
 
   for (const el of document.querySelectorAll('[data-ad="top"], [data-ad="bottom"]')) {
     const slot = ADSENSE.slots[el.dataset.ad];
-    if (slot) fill(el, slot, false);
+    if (slot) fill(el, slot, phone ? [320, 100] : null);
   }
 
   // Side rails only on wide screens, so the grid keeps its width elsewhere.
@@ -40,7 +43,7 @@ const ADSENSE = {
     if (railsShown || !wide.matches || !ADSENSE.slots.side) return;
     railsShown = true;
     document.body.classList.add('has-rails');
-    for (const el of document.querySelectorAll('[data-ad="side"]')) fill(el, ADSENSE.slots.side, true);
+    for (const el of document.querySelectorAll('[data-ad="side"]')) fill(el, ADSENSE.slots.side, [160, 600]);
   }
   rails();
   wide.addEventListener?.('change', rails);

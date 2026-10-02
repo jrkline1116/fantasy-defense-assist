@@ -468,7 +468,7 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
   body.has-rails .ad-rail-right { right: 15px; }
 }
 @media (max-width: 640px) {
-  .ad-top.ad-on, .ad-bottom.ad-on { min-height: 50px; }
+  .ad-top.ad-on, .ad-bottom.ad-on { min-height: 100px; max-height: 120px; }
 }
 
 /* ---------- legend: annotated sample cell, color key, click tips ---------- */
