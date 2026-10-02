@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=3">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5134360334819238" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -34,13 +34,31 @@
   </header>
 
   <section class="legend" aria-label="How to read the grid">
-    <div class="lg-anno">
-      <div class="lg-label left r1"><span class="txt"><b>Opponent</b></span><span class="ar ar-r" aria-hidden="true"></span></div>
-      <div class="lg-label left r2"><span class="txt"><b>Matchup rank</b><small>1st toughest, 32nd best</small></span><span class="ar ar-r" aria-hidden="true"></span></div>
-      <div class="cell tier-good sample" aria-hidden="true"><span class="opp">@DAL</span><span class="meta"><span class="rk">31st</span><span class="avg">12.7</span></span></div>
-      <div class="lg-label right r1"><span class="ar ar-l" aria-hidden="true"></span><span class="txt"><b>@ = away game</b><small>no @ = home</small></span></div>
-      <div class="lg-label right r2"><span class="ar ar-l" aria-hidden="true"></span><span class="txt"><b>Avg D/ST points</b><small>scored vs. this offense</small></span></div>
-    </div>
+    <svg class="lg-anno" viewBox="28 0 452 150" role="img" aria-labelledby="annoTitle">
+      <title id="annoTitle">Sample cell: opponent at top (@ means away), opponent rank against defenses at bottom left (1st toughest, 32nd best), average D/ST points scored against that opponent at bottom right.</title>
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" class="a-head"/>
+        </marker>
+      </defs>
+      <rect x="190" y="42" width="110" height="62" rx="4" class="a-cell"/>
+      <text x="245" y="69" text-anchor="middle" class="a-opp">@ATL</text>
+      <text x="240" y="94" text-anchor="end" class="a-rk">31st</text>
+      <text x="248" y="94" class="a-avg">12.7</text>
+
+      <path d="M324 24 C 296 20, 276 30, 268 50" class="a-line" marker-end="url(#ah)"/>
+      <text x="330" y="25" class="a-lbl">Opponent</text>
+      <text x="330" y="41" class="a-sub">@ = away game</text>
+
+      <path d="M154 84 C 170 82, 184 86, 197 88" class="a-line" marker-end="url(#ah)"/>
+      <text x="150" y="80" text-anchor="end" class="a-lbl">Opponent rank</text>
+      <text x="150" y="96" text-anchor="end" class="a-sub">vs. defenses</text>
+      <text x="150" y="112" text-anchor="end" class="a-sub">1st toughest, 32nd best</text>
+
+      <path d="M324 118 C 300 120, 282 114, 272 101" class="a-line" marker-end="url(#ah)"/>
+      <text x="330" y="119" class="a-lbl">Avg D/ST points</text>
+      <text x="330" y="135" class="a-sub">scored vs. this opponent</text>
+    </svg>
 
     <ul class="lg-key">
       <li><span class="sw sw-good">21st–32nd</span> Great matchup, stream it</li>
@@ -145,7 +163,7 @@
     <div id="customBody"></div>
   </dialog>
 
-  <script src="app.js"></script>
-  <script src="ads.js"></script>
+  <script src="app.js?v=3"></script>
+  <script src="ads.js?v=3"></script>
 </body>
 </html>
