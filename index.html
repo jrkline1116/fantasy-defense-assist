@@ -33,12 +33,27 @@
 
   </header>
 
-  <section class="help">
-    <p>
-      Each cell shows the opponent, how that offense ranks for opposing defenses, and the average D/ST
-      points scored against it. <b class="r-bad">1st</b> is the toughest matchup,
-      <b class="r-good">32nd</b> is the best. Click a team to mark it taken in your league, then flip <b>Hide taken</b> to hide or show those teams. Click a week to sort by that week's matchups. Click any matchup to see the game-by-game breakdown.
-    </p>
+  <section class="legend" aria-label="How to read the grid">
+    <div class="lg-anno">
+      <div class="lg-label left r1"><span class="txt"><b>Opponent</b></span><span class="ar ar-r" aria-hidden="true"></span></div>
+      <div class="lg-label left r2"><span class="txt"><b>Matchup rank</b><small>1st toughest, 32nd best</small></span><span class="ar ar-r" aria-hidden="true"></span></div>
+      <div class="cell tier-good sample" aria-hidden="true"><span class="opp">@DAL</span><span class="meta"><span class="rk">31st</span><span class="avg">12.7</span></span></div>
+      <div class="lg-label right r1"><span class="ar ar-l" aria-hidden="true"></span><span class="txt"><b>@ = away game</b><small>no @ = home</small></span></div>
+      <div class="lg-label right r2"><span class="ar ar-l" aria-hidden="true"></span><span class="txt"><b>Avg D/ST points</b><small>scored vs. this offense</small></span></div>
+    </div>
+
+    <ul class="lg-key">
+      <li><span class="sw sw-good">21st–32nd</span> Great matchup, stream it</li>
+      <li><span class="sw sw-mid">11th–20th</span> Middle of the pack</li>
+      <li><span class="sw sw-bad">1st–10th</span> Tough matchup, avoid</li>
+      <li><span class="sw sw-bye">BYE</span> No game that week</li>
+    </ul>
+
+    <ul class="lg-tips">
+      <li><b>Click a team</b> to mark it taken in your league</li>
+      <li><b>Click a week</b> to sort the best matchups to the top</li>
+      <li><b>Click a matchup</b> to see the game-by-game breakdown</li>
+    </ul>
   </section>
 
   <main>
