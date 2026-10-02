@@ -518,3 +518,45 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
   .legend { margin: 8px 6px 16px; padding: 14px 8px; gap: 16px; }
   .lg-key, .lg-tips { width: 100%; padding: 0 6px; }
 }
+
+/* ---------- best available picks ---------- */
+.picks {
+  max-width: 1100px; margin: 0 auto 14px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 4px solid var(--anno); border-radius: 10px;
+}
+.picks-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+.picks-title { font: 700 20px/1.1 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.picks-title::before { content: "★ "; color: var(--anno); }
+.picks-sub { color: var(--muted); font-size: 13px; }
+.picks-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pick-card {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 8px; cursor: pointer; font: inherit; text-align: left;
+}
+.picks-list li:first-child .pick-card { border: 2px solid var(--anno); }
+.pick-card:hover { border-color: var(--anno); }
+.pick-card img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.pick-n { font: 700 22px/1 "Barlow Condensed", "Arial Narrow", sans-serif; color: var(--anno); min-width: 14px; }
+.pick-who { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.pick-nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pick-vs { color: var(--muted); font-size: 13px; }
+.pick-proj { margin-left: auto; text-align: right; line-height: 1.05; }
+.pick-proj b { display: block; font: 700 22px/1 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.pick-proj span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+@media (max-width: 760px) {
+  .picks { padding: 10px; }
+  .picks-list { grid-template-columns: 1fr; gap: 6px; }
+  .pick-card { padding: 6px 10px; }
+}
+
+.cell { position: relative; }
+.cell.pick { outline: 3px solid var(--anno); outline-offset: -3px; }
+.cell.pick.clickable:hover { outline-color: var(--anno); }
+.pick-badge {
+  position: absolute; top: 2px; left: 3px;
+  font: 700 11px/1 Barlow, sans-serif; color: var(--anno);
+}
+tr.flash > * { animation: pickflash 1.4s ease-out; }
+@keyframes pickflash { 0%, 40% { box-shadow: inset 0 0 0 999px rgba(245, 197, 66, .28); } 100% { box-shadow: none; } }

@@ -45,6 +45,7 @@ const els = {
   clear: $('clearUnavailable'),
   detail: $('detail'),
   detailBody: $('detailBody'),
+  picks: $('picks'),
 };
 
 const state = {
@@ -213,6 +214,55 @@ function setSort(key) {
   render();
 }
 
+/* ---------- best available picks ---------- */
+
+// Projection = average of the D/ST's own points per game and what the opponent
+// gives up to D/STs per game, both in the active scoring. Taken teams are skipped,
+// so the list refills as you mark teams taken.
+const PICK_COUNT = 3;
+
+function pickWeek() {
+  return typeof state.sort.key === 'number' ? state.sort.key : state.weeks[0];
+}
+
+function computePicks() {
+  const week = pickWeek();
+  const list = [];
+  for (const t of Object.keys(state.data.teams)) {
+    if (state.unavailable.has(t)) continue;
+    const m = state.matchups[week]?.[t];
+    const d = state.dstRanks[t];
+    const r = m && state.ranks[m.opp];
+    if (!m || !d || !r) continue;
+    list.push({ team: t, m, proj: (d.avg + r.avg) / 2, dAvg: d.avg, oAvg: r.avg, oRank: r.rank });
+  }
+  list.sort((a, b) => b.proj - a.proj || a.team.localeCompare(b.team));
+  state.picks = { week, list: list.slice(0, PICK_COUNT) };
+  state.pickPlace = Object.fromEntries(state.picks.list.map((p, i) => [p.team, i + 1]));
+}
+
+function renderPicks() {
+  const { week, list } = state.picks;
+  const el = els.picks;
+  if (!week || !list.length) { el.hidden = true; return; }
+  const teams = state.data.teams;
+  const sortedWeek = typeof state.sort.key === 'number';
+  el.hidden = false;
+  el.innerHTML =
+    `<div class="picks-head"><span class="picks-title">Best available, Week ${week}</span>` +
+    `<span class="picks-sub">${SCORING.label} scoring${sortedWeek ? '' : '. Click another week to see its picks'}</span></div>` +
+    '<ol class="picks-list">' + list.map((p, i) => {
+      const t = teams[p.team];
+      return `<li><button type="button" class="pick-card" data-team="${p.team}" ` +
+        `title="${t.short}: ${fmt(p.dAvg)} pts/game, and ${teams[p.m.opp].short} allow ${fmt(p.oAvg)} to D/STs (${ordinal(p.oRank)}). Click to jump to the row.">` +
+        `<span class="pick-n">${i + 1}</span>` +
+        (t.logo ? `<img src="${t.logo}" alt="" loading="lazy">` : '') +
+        `<span class="pick-who"><span class="pick-nm">${t.short}</span>` +
+        `<span class="pick-vs">${p.m.home ? 'vs' : '@'} ${p.m.opp}</span></span>` +
+        `<span class="pick-proj"><b>${fmt(p.proj)}</b><span>proj</span></span></button></li>`;
+    }).join('') + '</ol>';
+}
+
 /* ---------- rendering ---------- */
 
 function headerCell(label, key, extraClass = '') {
@@ -267,6 +317,8 @@ function matchupCell(team, week) {
   if (state.sort.key === week) td.classList.add('sorted-col');
 
   const m = state.matchups[week]?.[team];
+  const place = week === state.picks?.week ? state.pickPlace?.[team] : null;
+  if (place) td.classList.add('pick');
   if (!m) {
     td.classList.add('bye');
     td.textContent = 'BYE';
@@ -285,8 +337,9 @@ function matchupCell(team, week) {
   td.setAttribute('role', 'button');
   td.innerHTML =
     `<span class="opp">${oppLabel}</span>` +
-    `<span class="meta"><span class="rk">${ordinal(r.rank)}</span><span class="avg">${r.avg.toFixed(1)}</span></span>`;
-  td.title = `Week ${week}: ${m.home ? 'vs' : 'at'} ${state.data.teams[m.opp].name}. ` +
+    `<span class="meta"><span class="rk">${ordinal(r.rank)}</span><span class="avg">${r.avg.toFixed(1)}</span></span>` +
+    (place ? `<span class="pick-badge" aria-label="Best available pick ${place}">★${place}</span>` : '');
+  td.title = (place ? `Best available pick #${place} for Week ${week}. ` : '') + `Week ${week}: ${m.home ? 'vs' : 'at'} ${state.data.teams[m.opp].name}. ` +
     `Defenses average ${r.avg.toFixed(1)} pts against them (${r.games} games), ${ordinal(r.rank)} of 32. Click for details.`;
   return td;
 }
@@ -295,6 +348,8 @@ function render() {
   const { teams } = state.data;
   const table = els.grid;
   table.textContent = '';
+  computePicks();
+  renderPicks();
   table.classList.toggle('hide-unavailable', els.hide.checked);
   els.takenCount.textContent = `(${state.unavailable.size})`;
 
@@ -313,6 +368,7 @@ function render() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'team';
+    btn.dataset.team = t;
     const isOut = state.unavailable.has(t);
     btn.setAttribute('aria-pressed', String(isOut));
     const d = state.dstRanks[t];
@@ -504,6 +560,16 @@ async function init() {
       e.preventDefault();
       openFrom(e);
     }
+  });
+  els.picks.addEventListener('click', (e) => {
+    const card = e.target.closest('.pick-card');
+    if (!card) return;
+    const row = els.grid.querySelector(`button.team[data-team="${card.dataset.team}"]`)?.closest('tr');
+    if (!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.remove('flash');
+    void row.offsetWidth;
+    row.classList.add('flash');
   });
   els.detail.addEventListener('click', (e) => {
     if (e.target === els.detail || e.target.closest('.d-close')) els.detail.close();
