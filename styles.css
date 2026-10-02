@@ -444,6 +444,7 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 .about h2 { margin: 18px 0 6px; font: 700 24px/1.15 "Barlow Condensed", "Arial Narrow", sans-serif; }
 .about p { margin: 0 0 12px; }
 .foot .links { margin-top: 6px; }
+.foot .sister { margin-top: 10px; }
 .foot a, .about a, .page a { color: var(--focus); }
 .page { max-width: 78ch; margin: 0 auto; padding: 24px clamp(12px, 3vw, 32px) 40px; }
 .page h1 { margin-bottom: 4px; }
