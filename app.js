@@ -131,8 +131,9 @@ function buildMatchups(schedule, fromWeek) {
   for (const g of schedule) {
     if (g.week < fromWeek) continue;
     byWeek[g.week] ??= {};
-    byWeek[g.week][g.home] = { opp: g.away, home: true };
-    byWeek[g.week][g.away] = { opp: g.home, home: false };
+    const done = !!g.completed;
+    byWeek[g.week][g.home] = { opp: g.away, home: true, id: g.id, done };
+    byWeek[g.week][g.away] = { opp: g.home, home: false, id: g.id, done };
   }
   return byWeek;
 }
@@ -191,13 +192,15 @@ function sortTeams() {
   const value = (t) => {
     const m = state.matchups[week]?.[t];
     if (!m) return null;                         // bye
+    if (m.done) return undefined;                // already played: after open games, before byes
     return state.ranks[m.opp]?.avg ?? null;      // sort by underlying average
   };
+  const group = (v) => (v === null ? 2 : v === undefined ? 1 : 0);   // open, played, bye
   state.teams.sort((a, b) => {
     const va = value(a), vb = value(b);
-    if (va == null && vb == null) return byName(a, b);
-    if (va == null) return 1;                    // byes always last
-    if (vb == null) return -1;
+    const ga = group(va), gb = group(vb);
+    if (ga !== gb) return ga - gb;
+    if (ga) return byName(a, b);
     return dir === 'desc' ? vb - va || byName(a, b) : va - vb || byName(a, b);
   });
 }
@@ -222,7 +225,25 @@ function setSort(key) {
 const PICK_COUNT = 3;
 
 function pickWeek() {
-  return typeof state.sort.key === 'number' ? state.sort.key : state.weeks[0];
+  return typeof state.sort.key === 'number' ? state.sort.key : state.planWeek;
+}
+
+// The week people are planning for. Once every game of the current week is final
+// except Monday night, picks move on to next week (waivers are already open).
+function findPlanWeek(schedule, weeks) {
+  const isMonday = (iso) => {
+    if (!iso) return false;
+    const day = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'America/New_York' })
+      .format(new Date(iso));
+    return day === 'Mon';
+  };
+  for (const w of weeks) {
+    const games = schedule.filter((g) => g.week === w);
+    const open = games.filter((g) => !g.completed);
+    const onlyMondayLeft = open.length < games.length && open.every((g) => isMonday(g.date));
+    if (!onlyMondayLeft) return w;
+  }
+  return weeks[0];
 }
 
 function computePicks() {
@@ -233,7 +254,7 @@ function computePicks() {
     const m = state.matchups[week]?.[t];
     const d = state.dstRanks[t];
     const r = m && state.ranks[m.opp];
-    if (!m || !d || !r) continue;
+    if (!m || m.done || !d || !r) continue;     // skip games already played
     list.push({ team: t, m, proj: (d.avg + r.avg) / 2, dAvg: d.avg, oAvg: r.avg, oRank: r.rank });
   }
   list.sort((a, b) => b.proj - a.proj || a.team.localeCompare(b.team));
@@ -327,6 +348,18 @@ function matchupCell(team, week) {
   }
   const r = state.ranks[m.opp];
   const oppLabel = (m.home ? '' : '@') + m.opp;
+  if (m.done) {
+    // Already played (e.g. Thursday night): gray it out and show what this D/ST scored.
+    const line = state.data.results?.[m.id]?.off?.[m.opp];
+    const pts = line ? scoreGame(line) : null;
+    td.classList.add('played');
+    if (r) { td.classList.add('clickable'); td.dataset.opp = m.opp; td.tabIndex = 0; td.setAttribute('role', 'button'); }
+    td.innerHTML = `<span class="opp">${oppLabel}</span>` +
+      `<span class="meta"><span class="fin">FINAL</span>${pts == null ? '' : `<span class="avg">${fmt(pts)} pts</span>`}</span>`;
+    td.title = `Week ${week}: already played ${m.home ? 'vs' : 'at'} ${state.data.teams[m.opp].name}.` +
+      (pts == null ? ' Points show after the next data update.' : ` ${state.data.teams[team].short} D/ST scored ${fmt(pts)} pts (${SCORING.label}).`);
+    return td;
+  }
   if (!r) {
     td.innerHTML = `<span class="opp">${oppLabel}</span><span class="meta"><span class="avg">no games yet</span></span>`;
     return td;
@@ -518,6 +551,7 @@ async function init() {
   const abbrs = Object.keys(data.teams);
   state.matchups = buildMatchups(data.schedule, data.currentWeek);
   state.weeks = Object.keys(state.matchups).map(Number).sort((a, b) => a - b);
+  state.planWeek = findPlanWeek(data.schedule, state.weeks);
   state.teams = abbrs.slice();
 
   const gamesPlayed = new Set(Object.values(data.results ?? {}).map((r) => r.week));
