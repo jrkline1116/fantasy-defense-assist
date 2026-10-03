@@ -13,7 +13,7 @@ const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT_FILE = path.join(ROOT, 'data', 'defense.json');
 const WEEKS = 18;
-const DATA_VERSION = 2;   // bump when parseSummary changes so stored games are re-fetched
+const DATA_VERSION = 3;   // bump when parseSummary changes so stored games are re-fetched
 
 const now = new Date();
 const SEASON = Number(process.env.SEASON) ||
@@ -73,11 +73,12 @@ const firstNum = (v) => {
 // Checks ESPN's play type AND the play description (minus the PAT in parentheses),
 // because some return TDs are typed as e.g. "Fumble Recovery (Opponent)".
 const DST_WORDS = /(interception|intercepted|fumble|punt|kickoff|kick off|kicks|blocked|missed field goal|return)/i;
-export function isDstTouchdown(typeText = '', playText = '') {
+// ESPN's type.text is the PLAY type ("Sack", "Pass Interception Return"...), not the
+// scoring type, so whether it was a touchdown comes from scoringType (or the score jump).
+export function isDstTouchdown(typeText = '', playText = '', isTd = /touchdown/i.test(typeText)) {
   if (/\bown\b/i.test(typeText)) return false;
   if (/fumble recovery \(opponent\)/i.test(typeText)) return true;
   const desc = String(playText).replace(/\([^)]*\)/g, ' ');
-  const isTd = /touchdown/i.test(typeText) || /touchdown/i.test(playText);
   return isTd && (DST_WORDS.test(typeText) || DST_WORDS.test(desc));
 }
 
@@ -105,12 +106,21 @@ export function parseSummary(summary, game) {
 
   const tds = { [home.abbr]: 0, [away.abbr]: 0 };
   const safeties = { [home.abbr]: 0, [away.abbr]: 0 };
+  let prevHome = 0, prevAway = 0;
   for (const p of summary.scoringPlays ?? []) {
     const scorer = idToAbbr[String(p.team?.id)] ?? p.team?.abbreviation;
+    const h = Number(p.homeScore), a = Number(p.awayScore);
+    const jump = Number.isFinite(h) && Number.isFinite(a) ? (h - prevHome) + (a - prevAway) : null;
+    if (Number.isFinite(h)) prevHome = h;
+    if (Number.isFinite(a)) prevAway = a;
     if (!(scorer in tds)) continue;
     const text = p.type?.text ?? '';
-    if (/safety/i.test(text)) safeties[scorer]++;
-    else if (isDstTouchdown(text, p.text ?? '')) tds[scorer]++;
+    const desc = p.text ?? '';
+    const kind = `${p.scoringType?.name ?? ''} ${p.scoringType?.abbreviation ?? ''}`;
+    const isSafety = /safety|\bSF\b/i.test(kind) || /safety/i.test(text) || /\bsafety\b/i.test(desc) || jump === 2;
+    const isTd = /touchdown|\bTD\b/i.test(kind) || /touchdown/i.test(text) || /touchdown/i.test(desc) || (jump != null && jump >= 6);
+    if (isSafety && !isTd) safeties[scorer]++;
+    else if (isTd && isDstTouchdown(text, desc, true)) tds[scorer]++;
   }
 
   // Blocked kicks: the drive's team kicked, so the other team gets the block.
@@ -129,7 +139,7 @@ export function parseSummary(summary, game) {
     const s = box[off] ?? {};
     const def = opp[off];
     out[off] = {
-      pa: score[off],
+      pa: Math.max(0, score[off] - 6 * tds[off]),   // D/ST isn't charged for return TDs it didn't allow
       ya: firstNum(s.totalYards),
       sacks: firstNum(s.sacksYardsLost), // "3-21" -> 3 sacks taken by this offense
       ints: firstNum(s.interceptions),   // interceptions thrown by this offense
