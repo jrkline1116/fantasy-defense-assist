@@ -13,7 +13,7 @@ const BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl';
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT_FILE = path.join(ROOT, 'data', 'defense.json');
 const WEEKS = 18;
-const DATA_VERSION = 3;   // bump when parseSummary changes so stored games are re-fetched
+const DATA_VERSION = 4;   // bump when parseSummary changes so stored games are re-fetched
 
 const now = new Date();
 const SEASON = Number(process.env.SEASON) ||
@@ -105,6 +105,7 @@ export function parseSummary(summary, game) {
   }
 
   const tds = { [home.abbr]: 0, [away.abbr]: 0 };
+  const defOnlyTds = { [home.abbr]: 0, [away.abbr]: 0 };   // INT/fumble returns (not kick/punt returns)
   const safeties = { [home.abbr]: 0, [away.abbr]: 0 };
   let prevHome = 0, prevAway = 0;
   for (const p of summary.scoringPlays ?? []) {
@@ -120,7 +121,12 @@ export function parseSummary(summary, game) {
     const isSafety = /safety|\bSF\b/i.test(kind) || /safety/i.test(text) || /\bsafety\b/i.test(desc) || jump === 2;
     const isTd = /touchdown|\bTD\b/i.test(kind) || /touchdown/i.test(text) || /touchdown/i.test(desc) || (jump != null && jump >= 6);
     if (isSafety && !isTd) safeties[scorer]++;
-    else if (isTd && isDstTouchdown(text, desc, true)) tds[scorer]++;
+    else if (isTd && isDstTouchdown(text, desc, true)) {
+      tds[scorer]++;
+      const special = /(punt|kickoff|kick off|kicks|kick return|field goal|\bfg\b|blocked)/i
+        .test(`${text} ${desc.replace(/\([^)]*\)/g, ' ')}`);
+      if (!special) defOnlyTds[scorer]++;
+    }
   }
 
   // Blocked kicks: the drive's team kicked, so the other team gets the block.
@@ -139,7 +145,9 @@ export function parseSummary(summary, game) {
     const s = box[off] ?? {};
     const def = opp[off];
     out[off] = {
-      pa: Math.max(0, score[off] - 6 * tds[off]),   // D/ST isn't charged for return TDs it didn't allow
+      // A pick-six or fumble-return TD was given up by the other team's offense, so the D/ST
+      // isn't charged for it. Kick/punt return TDs still count: special teams are part of the D/ST.
+      pa: Math.max(0, score[off] - 6 * defOnlyTds[off]),
       ya: firstNum(s.totalYards),
       sacks: firstNum(s.sacksYardsLost), // "3-21" -> 3 sacks taken by this offense
       ints: firstNum(s.interceptions),   // interceptions thrown by this offense
