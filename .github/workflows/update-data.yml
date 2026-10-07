@@ -2,9 +2,11 @@ name: Update defense data
 
 on:
   schedule:
-    - cron: '0 12 * * 1'    # Mondays, 5am Arizona time (after the Sunday games)
-    - cron: '0 12 * * 2'    # Tuesdays, 5am Arizona time (after Monday Night Football)
-    - cron: '0 12 * * 5'    # Fridays, 5am Arizona time (picks up Thursday Night Football)
+    # Times are UTC; Arizona is UTC-7. Odd minutes avoid GitHub's top-of-the-hour rush,
+    # and each morning has a backup run in case GitHub delays or skips the first one.
+    # A run with no new games makes no commit.
+    - cron: '17 12 * * 1,2,5'   # Mon, Tue, Fri 5:17am Arizona
+    - cron: '47 14 * * 1,2,5'   # backup, 7:47am Arizona
   workflow_dispatch:        # adds a "Run workflow" button on the Actions tab
 
 permissions:

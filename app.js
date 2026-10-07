@@ -80,6 +80,7 @@ function computeRanks(results, teamAbbrs) {
   const totals = Object.fromEntries(teamAbbrs.map((t) => [t, { sum: 0, games: 0 }]));
   const logs = Object.fromEntries(teamAbbrs.map((t) => [t, {}]));
   const defTotals = Object.fromEntries(teamAbbrs.map((t) => [t, { sum: 0, games: 0 }]));
+  const defLogs = Object.fromEntries(teamAbbrs.map((t) => [t, {}]));
   let leagueSum = 0, leagueGames = 0;
 
   for (const r of Object.values(results)) {
@@ -97,6 +98,7 @@ function computeRanks(results, teamAbbrs) {
       if (def && defTotals[def]) {
         defTotals[def].sum += pts;
         defTotals[def].games += 1;
+        defLogs[def][r.week] = { ...g, pts };
       }
     }
   }
@@ -121,7 +123,7 @@ function computeRanks(results, teamAbbrs) {
     dstRanks[t] = { rank: better + 1, total: defTotals[t].sum, games: defTotals[t].games,
       avg: defTotals[t].sum / defTotals[t].games };
   }
-  return { ranks, logs, dstRanks, nflAvg: leagueGames ? leagueSum / leagueGames : 0 };
+  return { ranks, logs, defLogs, dstRanks, nflAvg: leagueGames ? leagueSum / leagueGames : 0 };
 }
 
 /* ---------- data shaping ---------- */
@@ -398,24 +400,36 @@ function render() {
 
     const th = document.createElement('th');
     th.scope = 'row';
+    const isOut = state.unavailable.has(t);
+    const wrap = document.createElement('div');
+    wrap.className = 'team-cell';
+    const take = document.createElement('button');
+    take.type = 'button';
+    take.className = 'take';
+    take.setAttribute('role', 'switch');
+    take.setAttribute('aria-checked', String(isOut));
+    take.setAttribute('aria-label', `${teams[t].short} D/ST taken in your league`);
+    take.title = isOut ? 'Taken in your league. Click to mark available.' : 'Mark as taken in your league';
+    take.innerHTML = '<span class="knob"></span>';
+    take.addEventListener('click', () => toggleTeam(t));
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'team';
     btn.dataset.team = t;
-    const isOut = state.unavailable.has(t);
-    btn.setAttribute('aria-pressed', String(isOut));
     const d = state.dstRanks[t];
     const rankLine = d
       ? `${ordinal(d.rank)} in ${SCORING.label} scoring: ${fmt(d.total)} pts in ${d.games} game${d.games === 1 ? '' : 's'} (${fmt(d.avg)} avg). `
       : '';
-    btn.title = rankLine + (isOut ? 'Taken in your league. Click to mark available.' : 'Click to mark as taken in your league.');
+    btn.title = rankLine + 'Click to see this D/ST week by week.';
     btn.innerHTML =
       (teams[t].logo ? `<img src="${teams[t].logo}" alt="" loading="lazy">` : '') +
       `<span class="who"><span class="nm">${teams[t].short}</span><span class="ab">${t} D/ST</span></span>` +
       (d ? `<span class="prk"><span class="prk-n">${ordinal(d.rank)}</span><span class="prk-p">${fmt(d.total)} pts (${fmt(d.avg)})</span></span>` : '') +
       `<span class="flag">Taken</span>`;
-    btn.addEventListener('click', () => toggleTeam(t));
-    th.append(btn);
+    btn.addEventListener('click', () => openDefense(t));
+    wrap.append(take, btn);
+    th.append(wrap);
     tr.append(th);
 
     for (const w of state.weeks) tr.append(matchupCell(t, w));
@@ -498,9 +512,64 @@ function openDetail(off) {
   els.detail.showModal();
 }
 
+// Week-by-week history for one D/ST: what it scored, plus its upcoming opponents.
+function openDefense(def) {
+  const { teams, schedule } = state.data;
+  const t = teams[def];
+  const d = state.dstRanks[def];
+  const games = {};
+  for (const g of schedule) {
+    if (g.home === def) games[g.week] = { opp: g.away, home: true };
+    else if (g.away === def) games[g.week] = { opp: g.home, home: false };
+  }
+  let rows = '';
+  for (let w = 1; w <= 18; w++) {
+    const g = games[w];
+    if (!g) { rows += `<tr class="bye-row"><td>${w}</td><td>Bye</td><td colspan="7"></td></tr>`; continue; }
+    const opp = (g.home ? '' : '@') + g.opp;
+    const log = state.defLogs[def]?.[w];
+    if (!log) {
+      const r = state.ranks[g.opp];
+      const hint = r ? ` <span class="opp-rk tier-${tierFor(r.rank)}">${ordinal(r.rank)}</span>` : '';
+      rows += `<tr class="future"><td>${w}</td><td>${opp}${hint}</td>` + '<td>–</td>'.repeat(7) + '</tr>';
+      continue;
+    }
+    const ptsCls = log.pts >= 10 ? 'good' : log.pts < 3 ? 'bad' : '';
+    rows += `<tr><td>${w}</td><td>${opp}</td><td>${log.sacks}</td><td>${log.ints}</td>` +
+      `<td>${log.fumLost}</td><td>${log.defTd}</td><td>${log.pa}</td><td>${log.ya}</td>` +
+      `<td class="pts ${ptsCls}">${fmt(log.pts)}</td></tr>`;
+  }
+  const taken = state.unavailable.has(def);
+  els.detailBody.innerHTML = `
+    <div class="d-head">
+      ${t.logo ? `<img src="${t.logo}" alt="">` : ''}
+      <div>
+        <h2 id="detailTitle">${t.short} D/ST</h2>
+        <p class="d-sub">${t.name}, ${d ? `${d.games} game${d.games === 1 ? '' : 's'} played` : 'no games yet'} · ${SCORING.label} scoring${taken ? ' · <b>Taken</b>' : ''}</p>
+      </div>
+    </div>
+    <div class="d-stats">
+      <div><span class="d-num">${d ? fmt(d.total) : '–'}</span><span class="d-lbl">Season pts</span></div>
+      <div><span class="d-num">${d ? fmt(d.avg) : '–'}</span><span class="d-lbl">Avg per game</span></div>
+      <div><span class="d-num rk">${d ? ordinal(d.rank) : '–'}</span><span class="d-lbl">D/ST rank</span></div>
+    </div>
+    <div class="d-table-wrap">
+      <table class="d-table">
+        <thead><tr>
+          <th>Wk</th><th>Opp</th><th title="Sacks">Sck</th><th title="Interceptions">Int</th>
+          <th title="Fumble recoveries">FR</th><th title="Defensive and return touchdowns">TD</th>
+          <th title="Points allowed">PA</th><th title="Yards allowed">Yds</th><th>Pts</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="d-note">Upcoming games show the opponent's rank vs. D/STs (21st–32nd is a good matchup).</p>`;
+  els.detail.showModal();
+}
+
 function applyScoring() {
   SCORING = PRESETS[state.scoringKey] ?? PRESETS.espn;
-  ({ ranks: state.ranks, logs: state.logs, dstRanks: state.dstRanks, nflAvg: state.nflAvg } =
+  ({ ranks: state.ranks, logs: state.logs, defLogs: state.defLogs, dstRanks: state.dstRanks, nflAvg: state.nflAvg } =
     computeRanks(state.data.results ?? {}, Object.keys(state.data.teams)));
   els.scoringNote.textContent = `${SCORING.label} default D/ST scoring`;
   for (const tab of els.tabs.querySelectorAll('[data-scoring]')) {
