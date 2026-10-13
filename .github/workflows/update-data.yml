@@ -2,11 +2,13 @@ name: Update defense data
 
 on:
   schedule:
-    # Times are UTC; Arizona is UTC-7. Odd minutes avoid GitHub's top-of-the-hour rush,
-    # and each morning has a backup run in case GitHub delays or skips the first one.
-    # A run with no new games makes no commit.
-    - cron: '17 12 * * 1,2,5'   # Mon, Tue, Fri 5:17am Arizona
-    - cron: '47 14 * * 1,2,5'   # backup, 7:47am Arizona
+    # Times are UTC; Arizona is UTC-7. GitHub often starts scheduled runs late (sometimes
+    # hours), so each update morning tries five times. A run with no new games commits nothing.
+    - cron: '17 12 * * 1,2,5'   # Mon, Tue, Fri  5:17am Arizona
+    - cron: '47 13 * * 1,2,5'   #                6:47am
+    - cron: '17 15 * * 1,2,5'   #                8:17am
+    - cron: '47 16 * * 1,2,5'   #                9:47am
+    - cron: '17 18 * * 1,2,5'   #               11:17am
   workflow_dispatch:        # adds a "Run workflow" button on the Actions tab
 
 permissions:

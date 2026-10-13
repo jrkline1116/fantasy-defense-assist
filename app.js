@@ -128,12 +128,23 @@ function computeRanks(results, teamAbbrs) {
 
 /* ---------- data shaping ---------- */
 
+// A game counts as over once ESPN marks it final, or 4.5 hours after kickoff even if
+// the data hasn't been rebuilt yet (GitHub's scheduled runs can be hours late).
+const GAME_LENGTH_MS = 4.5 * 3600 * 1000;
+const isOver = (g) => !!g.completed || (!!g.date && Date.now() > Date.parse(g.date) + GAME_LENGTH_MS);
+
+// First week that still has a game left to play.
+function firstOpenWeek(schedule, fallback) {
+  const open = schedule.filter((g) => !isOver(g)).map((g) => g.week);
+  return open.length ? Math.min(...open) : fallback;
+}
+
 function buildMatchups(schedule, fromWeek) {
   const byWeek = {};
   for (const g of schedule) {
     if (g.week < fromWeek) continue;
     byWeek[g.week] ??= {};
-    const done = !!g.completed;
+    const done = isOver(g);
     byWeek[g.week][g.home] = { opp: g.away, home: true, id: g.id, done };
     byWeek[g.week][g.away] = { opp: g.home, home: false, id: g.id, done };
   }
@@ -241,7 +252,7 @@ function findPlanWeek(schedule, weeks) {
   };
   for (const w of weeks) {
     const games = schedule.filter((g) => g.week === w);
-    const open = games.filter((g) => !g.completed);
+    const open = games.filter((g) => !isOver(g));
     const onlyMondayLeft = open.length < games.length && open.every((g) => isMonday(g.date));
     if (!onlyMondayLeft) return w;
   }
@@ -357,7 +368,7 @@ function matchupCell(team, week) {
     td.classList.add('played');
     if (r) { td.classList.add('clickable'); td.dataset.opp = m.opp; td.tabIndex = 0; td.setAttribute('role', 'button'); }
     td.innerHTML = `<span class="opp">${oppLabel}</span>` +
-      `<span class="meta"><span class="fin">FINAL</span>${pts == null ? '' : `<span class="avg">${fmt(pts)} pts</span>`}</span>`;
+      `<span class="meta"><span class="fin">FINAL</span><span class="avg">${pts == null ? 'pts soon' : `${fmt(pts)} pts`}</span></span>`;
     td.title = `Week ${week}: already played ${m.home ? 'vs' : 'at'} ${state.data.teams[m.opp].name}.` +
       (pts == null ? ' Points show after the next data update.' : ` ${state.data.teams[team].short} D/ST scored ${fmt(pts)} pts (${SCORING.label}).`);
     return td;
@@ -618,7 +629,7 @@ async function init() {
   state.data = data;
   state.storageKey = `dst-grid-${data.season}`;
   const abbrs = Object.keys(data.teams);
-  state.matchups = buildMatchups(data.schedule, data.currentWeek);
+  state.matchups = buildMatchups(data.schedule, Math.max(data.currentWeek, firstOpenWeek(data.schedule, data.currentWeek)));
   state.weeks = Object.keys(state.matchups).map(Number).sort((a, b) => a - b);
   state.planWeek = findPlanWeek(data.schedule, state.weeks);
   state.teams = abbrs.slice();
