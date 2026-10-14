@@ -445,6 +445,13 @@ tbody tr:hover td, tbody tr:hover th { filter: brightness(.97); }
 .about p { margin: 0 0 12px; }
 .foot .links { margin-top: 6px; }
 .foot .sister { margin-top: 10px; }
+.foot .coffee { margin-top: 10px; }
+.foot .coffee a {
+  display: inline-block; padding: 5px 12px; margin-right: 4px;
+  border: 1px solid var(--anno); border-radius: 999px;
+  color: var(--ink); font-weight: 600; text-decoration: none;
+}
+.foot .coffee a:hover { background: var(--anno); color: #111; }
 .foot a, .about a, .page a { color: var(--focus); }
 .page { max-width: 78ch; margin: 0 auto; padding: 24px clamp(12px, 3vw, 32px) 40px; }
 .page h1 { margin-bottom: 4px; }
