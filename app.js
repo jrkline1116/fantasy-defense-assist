@@ -190,6 +190,18 @@ function sortTeams() {
     state.teams.sort((a, b) => (dir === 'asc' ? byName(a, b) : byName(b, a)));
     return;
   }
+  if (key === 'sos') {
+    if (!state.sos) computeSos();
+    const v = (t) => state.sos[t]?.avg ?? null;
+    state.teams.sort((a, b) => {
+      const va = v(a), vb = v(b);
+      if (va == null && vb == null) return byName(a, b);
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return dir === 'asc' ? vb - va || byName(a, b) : va - vb || byName(a, b);
+    });
+    return;
+  }
   if (key === 'prk') {
     const tot = (t) => state.dstRanks[t]?.total ?? null;
     state.teams.sort((a, b) => {
@@ -220,14 +232,73 @@ function sortTeams() {
 
 function setSort(key) {
   if (state.sort.key === key) {
-    if (key === 'team' || key === 'prk') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+    if (key === 'team' || key === 'prk' || key === 'sos') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
     else state.sort.dir = state.sort.dir === 'desc' ? 'asc' : 'desc';
   } else {
     // Rank opens with 1st on top, A–Z with A on top, weeks with best matchups on top.
-    state.sort = { key, dir: key === 'team' || key === 'prk' ? 'asc' : 'desc' };
+    state.sort = { key, dir: key === 'team' || key === 'prk' || key === 'sos' ? 'asc' : 'desc' };
   }
   sortTeams();
   render();
+}
+
+/* ---------- rest-of-season schedule strength ---------- */
+
+// For each D/ST: the average that its remaining opponents give up to D/STs per game
+// (active scoring tab). Byes and games already played are skipped. 1st = easiest.
+function computeSos() {
+  const rows = [];
+  for (const t of Object.keys(state.data.teams)) {
+    let sum = 0, games = 0;
+    for (const w of state.weeks) {
+      const m = state.matchups[w]?.[t];
+      const r = m && !m.done && state.ranks[m.opp];
+      if (!r) continue;
+      sum += r.avg;
+      games += 1;
+    }
+    if (games) rows.push({ t, avg: sum / games, games });
+  }
+  const sos = {};
+  for (const row of rows) {
+    const shown = Math.round(row.avg * 10);
+    const easier = rows.filter((o) => Math.round(o.avg * 10) > shown).length;
+    sos[row.t] = { rank: easier + 1, avg: row.avg, games: row.games, of: rows.length };
+  }
+  state.sos = sos;
+}
+
+// Green for the easiest third, red for the hardest third.
+const sosTier = (rank, of) => (rank <= Math.round(of * 10 / 32) ? 'good' : rank > of - Math.round(of * 10 / 32) ? 'bad' : 'mid');
+
+function sosHeader() {
+  const th = document.createElement('th');
+  th.scope = 'col';
+  th.className = 'sos-col';
+  const active = state.sort.key === 'sos';
+  if (active) th.setAttribute('aria-sort', state.sort.dir === 'asc' ? 'ascending' : 'descending');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'sort';
+  btn.title = 'Strength of remaining schedule. 1st = easiest rest of season for a D/ST. Click to sort' +
+    (active ? ' (click again to reverse).' : '.');
+  btn.innerHTML = `<span>Rest of<br>season</span><span class="arrow" aria-hidden="true">${active ? (state.sort.dir === 'asc' ? '▲' : '▼') : ''}</span>`;
+  btn.addEventListener('click', () => setSort('sos'));
+  th.append(btn);
+  return th;
+}
+
+function sosCell(t) {
+  const td = document.createElement('td');
+  td.className = 'cell sos-col';
+  if (state.sort.key === 'sos') td.classList.add('sorted-col');
+  const s = state.sos?.[t];
+  if (!s) { td.innerHTML = '<span class="meta"><span class="avg">–</span></span>'; return td; }
+  td.classList.add(`tier-${sosTier(s.rank, s.of)}`);
+  td.innerHTML = `<span class="opp">${ordinal(s.rank)}</span><span class="meta"><span class="avg">${fmt(s.avg)} · ${s.games}g</span></span>`;
+  td.title = `${state.data.teams[t].short} D/ST: ${ordinal(s.rank)} easiest remaining schedule of ${s.of}. ` +
+    `Its ${s.games} remaining opponents give up ${fmt(s.avg)} pts per game to D/STs on average (${SCORING.label} scoring).`;
+  return td;
 }
 
 /* ---------- best available picks ---------- */
@@ -394,6 +465,7 @@ function render() {
   const { teams } = state.data;
   const table = els.grid;
   table.textContent = '';
+  computeSos();
   computePicks();
   renderPicks();
   table.classList.toggle('hide-unavailable', els.hide.checked);
@@ -402,6 +474,7 @@ function render() {
   const thead = table.createTHead();
   const hr = thead.insertRow();
   hr.append(cornerCell());
+  hr.append(sosHeader());
   for (const w of state.weeks) hr.append(headerCell(`Week ${w}`, w));
 
   const tbody = table.createTBody();
@@ -443,6 +516,7 @@ function render() {
     th.append(wrap);
     tr.append(th);
 
+    tr.append(sosCell(t));
     for (const w of state.weeks) tr.append(matchupCell(t, w));
   }
 }
@@ -580,6 +654,7 @@ function openDefense(def) {
 
 function applyScoring() {
   SCORING = PRESETS[state.scoringKey] ?? PRESETS.espn;
+  state.sos = null;   // recomputed for the new scoring
   ({ ranks: state.ranks, logs: state.logs, defLogs: state.defLogs, dstRanks: state.dstRanks, nflAvg: state.nflAvg } =
     computeRanks(state.data.results ?? {}, Object.keys(state.data.teams)));
   els.scoringNote.textContent = `${SCORING.label} default D/ST scoring`;

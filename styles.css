@@ -596,3 +596,10 @@ tr.flash > * { animation: pickflash 1.4s ease-out; }
   .team-cell .team { padding-left: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { .take .knob { transition: none; } }
+
+/* rest-of-season schedule strength column */
+.grid thead th.sos-col .sort { line-height: 1.05; padding: 6px 8px; }
+.cell.sos-col { border-right: 2px solid var(--line-strong); min-width: 76px; }
+.cell.sos-col .opp { font-weight: 700; }
+.cell.sos-col.tier-good .opp { color: var(--good); }
+.cell.sos-col.tier-bad .opp { color: var(--bad); }
