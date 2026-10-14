@@ -2,10 +2,47 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://fantasydefenseassist.com/</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>daily</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guides.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-streaming-defenses.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-dst-scoring.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-playoff-defenses.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-how-rankings-work.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/about.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>yearly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/contact.html</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>yearly</changefreq>
   </url>
   <url>
     <loc>https://fantasydefenseassist.com/privacy.html</loc>
+    <lastmod>2026-10-14</lastmod>
     <changefreq>yearly</changefreq>
   </url>
 </urlset>

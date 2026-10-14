@@ -618,3 +618,41 @@ tr.flash > * { animation: pickflash 1.4s ease-out; }
 }
 .sos-seg button[aria-pressed="true"] { opacity: 1; border-color: #f5c542; color: #f5c542; }
 .sos-seg button:hover { opacity: 1; }
+
+/* site nav (all pages) */
+.site-nav {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px;
+  max-width: 1100px; margin: 0 auto; padding: 10px clamp(12px, 3vw, 32px);
+}
+.site-nav .brand { font: 700 18px/1 "Barlow Condensed", "Arial Narrow", sans-serif; color: var(--ink); text-decoration: none; }
+.site-nav .nav-links { display: flex; gap: 4px; }
+.site-nav .nav-links a {
+  padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none;
+  font: 600 15px/1 "Barlow Condensed", "Arial Narrow", sans-serif; letter-spacing: .02em;
+}
+.site-nav .nav-links a:hover { color: var(--ink); background: var(--surface); }
+.site-nav .nav-links a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--anno); }
+
+/* guides + articles */
+.page .crumb { margin: 0 0 6px; font-size: 14px; }
+.page.article { line-height: 1.6; }
+.page ol, .page ul { padding-left: 1.3em; }
+.tbl-wrap { overflow-x: auto; margin: 6px 0 12px; }
+.tbl { border-collapse: collapse; min-width: 280px; font-size: 15px; }
+.tbl th, .tbl td { padding: 6px 14px 6px 0; border-bottom: 1px solid var(--line); text-align: left; }
+.tbl th { font-weight: 600; color: var(--muted); }
+.tbl td + td, .tbl th + th { text-align: right; }
+.guide-list { list-style: none; padding: 0 !important; margin: 12px 0 18px; display: grid; gap: 10px; }
+@media (min-width: 760px) { .guides-teaser .guide-list { grid-template-columns: 1fr 1fr; } }
+.guide-card a {
+  display: block; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink); text-decoration: none;
+}
+.guide-card a:hover { border-color: var(--anno); }
+.guide-card b { display: block; font: 700 19px/1.2 "Barlow Condensed", "Arial Narrow", sans-serif; }
+.guide-card span { display: block; color: var(--muted); font-size: 14px; margin-top: 3px; }
+.related { margin-top: 28px; padding-top: 6px; border-top: 1px solid var(--line); }
+.cta { font-weight: 600; }
+.contact-box { font-size: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.guides-teaser { max-width: 1100px; }
+.about.guides-teaser { display: block; }
