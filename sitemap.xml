@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://fantasydefenseassist.com/</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-18</lastmod>
     <changefreq>daily</changefreq>
   </url>
   <url>
@@ -44,5 +44,30 @@
     <loc>https://fantasydefenseassist.com/privacy.html</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>yearly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-reading-a-matchup.html</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-dst-waivers-faab.html</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-drop-drafted-defense.html</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-thursday-defenses.html</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://fantasydefenseassist.com/guide-dst-glossary.html</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
   </url>
 </urlset>
