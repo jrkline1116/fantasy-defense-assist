@@ -228,6 +228,16 @@ async function main() {
     results,
   };
 
+  // Skip the write (and the commit) when nothing but the timestamp would change.
+  try {
+    const old = JSON.parse(await readFile(OUT_FILE, 'utf8'));
+    const same = (o) => JSON.stringify({ ...o, updatedAt: null });
+    if (same(old) === same(data)) {
+      console.log(`No new results (current week ${currentWeek}). Leaving data unchanged.`);
+      return;
+    }
+  } catch { /* first run */ }
+
   await mkdir(path.dirname(OUT_FILE), { recursive: true });
   await writeFile(OUT_FILE, JSON.stringify(data) + '\n');
   console.log(`Season ${SEASON}, current week ${currentWeek}. Games scored: ${scored} (${fetched} fetched, ${reused} reused, ${incomplete} incomplete).`);

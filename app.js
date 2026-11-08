@@ -59,6 +59,7 @@ const state = {
   matchups: {},       // week -> team -> { opp, home }
   sort: { key: 'prk', dir: 'asc' },   // 'prk' (D/ST rank), 'team' (A–Z) or a week number
   scoringKey: 'espn',
+  sosRange: 'ros',    // 'ros' = rest of season, 'po' = fantasy playoffs (Weeks 15–17)
   unavailable: new Set(),
   storageKey: 'dst-grid',
 };
@@ -128,12 +129,23 @@ function computeRanks(results, teamAbbrs) {
 
 /* ---------- data shaping ---------- */
 
+// A game counts as over once ESPN marks it final, or 4.5 hours after kickoff even if
+// the data hasn't been rebuilt yet (GitHub's scheduled runs can be hours late).
+const GAME_LENGTH_MS = 4.5 * 3600 * 1000;
+const isOver = (g) => !!g.completed || (!!g.date && Date.now() > Date.parse(g.date) + GAME_LENGTH_MS);
+
+// First week that still has a game left to play.
+function firstOpenWeek(schedule, fallback) {
+  const open = schedule.filter((g) => !isOver(g)).map((g) => g.week);
+  return open.length ? Math.min(...open) : fallback;
+}
+
 function buildMatchups(schedule, fromWeek) {
   const byWeek = {};
   for (const g of schedule) {
     if (g.week < fromWeek) continue;
     byWeek[g.week] ??= {};
-    const done = !!g.completed;
+    const done = isOver(g);
     byWeek[g.week][g.home] = { opp: g.away, home: true, id: g.id, done };
     byWeek[g.week][g.away] = { opp: g.home, home: false, id: g.id, done };
   }
@@ -155,6 +167,7 @@ function loadUnavailable() {
     state.unavailable = new Set(saved.unavailable ?? []);
     els.hide.checked = !!saved.hide;
     if (PRESETS[saved.scoring]) state.scoringKey = saved.scoring;
+    if (saved.sosRange === 'po' || saved.sosRange === 'ros') state.sosRange = saved.sosRange;
   } catch { /* storage unavailable */ }
 }
 
@@ -164,6 +177,7 @@ function saveUnavailable() {
       unavailable: [...state.unavailable],
       hide: els.hide.checked,
       scoring: state.scoringKey,
+      sosRange: state.sosRange,
     }));
   } catch { /* storage unavailable */ }
 }
@@ -177,6 +191,18 @@ function sortTeams() {
 
   if (key === 'team') {
     state.teams.sort((a, b) => (dir === 'asc' ? byName(a, b) : byName(b, a)));
+    return;
+  }
+  if (key === 'sos') {
+    if (!state.sos) computeSos();
+    const v = (t) => state.sos[t]?.avg ?? null;
+    state.teams.sort((a, b) => {
+      const va = v(a), vb = v(b);
+      if (va == null && vb == null) return byName(a, b);
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      return dir === 'asc' ? vb - va || byName(a, b) : va - vb || byName(a, b);
+    });
     return;
   }
   if (key === 'prk') {
@@ -209,14 +235,108 @@ function sortTeams() {
 
 function setSort(key) {
   if (state.sort.key === key) {
-    if (key === 'team' || key === 'prk') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
+    if (key === 'team' || key === 'prk' || key === 'sos') state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
     else state.sort.dir = state.sort.dir === 'desc' ? 'asc' : 'desc';
   } else {
     // Rank opens with 1st on top, A–Z with A on top, weeks with best matchups on top.
-    state.sort = { key, dir: key === 'team' || key === 'prk' ? 'asc' : 'desc' };
+    state.sort = { key, dir: key === 'team' || key === 'prk' || key === 'sos' ? 'asc' : 'desc' };
   }
   sortTeams();
   render();
+}
+
+/* ---------- rest-of-season schedule strength ---------- */
+
+// For each D/ST: the average that its remaining opponents give up to D/STs per game
+// (active scoring tab). Byes and games already played are skipped. 1st = easiest.
+// The Playoffs view only counts Weeks 15–17, the usual fantasy playoff weeks.
+const PLAYOFF_WEEKS = [15, 16, 17];
+const sosWeeks = () => (state.sosRange === 'po'
+  ? state.weeks.filter((w) => PLAYOFF_WEEKS.includes(w))
+  : state.weeks);
+
+function computeSos() {
+  const rows = [];
+  for (const t of Object.keys(state.data.teams)) {
+    let sum = 0, games = 0;
+    for (const w of sosWeeks()) {
+      const m = state.matchups[w]?.[t];
+      const r = m && !m.done && state.ranks[m.opp];
+      if (!r) continue;
+      sum += r.avg;
+      games += 1;
+    }
+    if (games) rows.push({ t, avg: sum / games, games });
+  }
+  const sos = {};
+  for (const row of rows) {
+    const shown = Math.round(row.avg * 10);
+    const easier = rows.filter((o) => Math.round(o.avg * 10) > shown).length;
+    sos[row.t] = { rank: easier + 1, avg: row.avg, games: row.games, of: rows.length };
+  }
+  state.sos = sos;
+}
+
+// Green for the easiest third, red for the hardest third.
+const sosTier = (rank, of) => (rank <= Math.round(of * 10 / 32) ? 'good' : rank > of - Math.round(of * 10 / 32) ? 'bad' : 'mid');
+
+function sosHeader() {
+  const th = document.createElement('th');
+  th.scope = 'col';
+  th.className = 'sos-col';
+  const po = state.sosRange === 'po';
+  const active = state.sort.key === 'sos';
+  if (active) th.setAttribute('aria-sort', state.sort.dir === 'asc' ? 'ascending' : 'descending');
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'sort';
+  btn.title = (po ? 'Schedule strength for the fantasy playoffs, Weeks 15–17.' : 'Strength of remaining schedule.') +
+    ' 1st = easiest for a D/ST. Click to sort' + (active ? ' (click again to reverse).' : '.');
+  btn.innerHTML = `<span>${po ? 'Playoffs<br>Wk 15–17' : 'Rest of<br>season'}</span>` +
+    `<span class="arrow" aria-hidden="true">${active ? (state.sort.dir === 'asc' ? '▲' : '▼') : ''}</span>`;
+  btn.addEventListener('click', () => setSort('sos'));
+
+  const seg = document.createElement('div');
+  seg.className = 'sos-seg';
+  seg.setAttribute('role', 'group');
+  seg.setAttribute('aria-label', 'Schedule range');
+  for (const [key, label, title] of [['ros', 'Season', 'Rest of season'], ['po', 'Playoffs', 'Fantasy playoffs, Weeks 15–17']]) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.title = title;
+    b.setAttribute('aria-pressed', String(state.sosRange === key));
+    b.addEventListener('click', () => {
+      if (state.sosRange === key) return;
+      state.sosRange = key;
+      state.sos = null;
+      saveUnavailable();
+      sortTeams();
+      render();
+    });
+    seg.append(b);
+  }
+  th.append(btn, seg);
+  return th;
+}
+
+function sosCell(t) {
+  const td = document.createElement('td');
+  td.className = 'cell sos-col';
+  if (state.sort.key === 'sos') td.classList.add('sorted-col');
+  const s = state.sos?.[t];
+  if (!s) {
+    td.innerHTML = '<span class="meta"><span class="avg">–</span></span>';
+    td.title = state.sosRange === 'po' ? 'No playoff games left to rate (bye, or Weeks 15–17 are over).' : 'No games left.';
+    return td;
+  }
+  td.classList.add(`tier-${sosTier(s.rank, s.of)}`);
+  td.innerHTML = `<span class="opp">${ordinal(s.rank)}</span><span class="meta"><span class="avg">${fmt(s.avg)} · ${s.games}g</span></span>`;
+  const range = state.sosRange === 'po' ? 'Weeks 15–17 schedule' : 'remaining schedule';
+  td.title = `${state.data.teams[t].short} D/ST: ${ordinal(s.rank)} easiest ${range} of ${s.of}. ` +
+    `Its ${s.games} ${state.sosRange === 'po' ? 'playoff' : 'remaining'} opponents give up ${fmt(s.avg)} pts per game to D/STs on average (${SCORING.label} scoring).`;
+  return td;
 }
 
 /* ---------- best available picks ---------- */
@@ -241,7 +361,7 @@ function findPlanWeek(schedule, weeks) {
   };
   for (const w of weeks) {
     const games = schedule.filter((g) => g.week === w);
-    const open = games.filter((g) => !g.completed);
+    const open = games.filter((g) => !isOver(g));
     const onlyMondayLeft = open.length < games.length && open.every((g) => isMonday(g.date));
     if (!onlyMondayLeft) return w;
   }
@@ -357,7 +477,7 @@ function matchupCell(team, week) {
     td.classList.add('played');
     if (r) { td.classList.add('clickable'); td.dataset.opp = m.opp; td.tabIndex = 0; td.setAttribute('role', 'button'); }
     td.innerHTML = `<span class="opp">${oppLabel}</span>` +
-      `<span class="meta"><span class="fin">FINAL</span>${pts == null ? '' : `<span class="avg">${fmt(pts)} pts</span>`}</span>`;
+      `<span class="meta"><span class="fin">FINAL</span><span class="avg">${pts == null ? 'pts soon' : `${fmt(pts)} pts`}</span></span>`;
     td.title = `Week ${week}: already played ${m.home ? 'vs' : 'at'} ${state.data.teams[m.opp].name}.` +
       (pts == null ? ' Points show after the next data update.' : ` ${state.data.teams[team].short} D/ST scored ${fmt(pts)} pts (${SCORING.label}).`);
     return td;
@@ -383,6 +503,7 @@ function render() {
   const { teams } = state.data;
   const table = els.grid;
   table.textContent = '';
+  computeSos();
   computePicks();
   renderPicks();
   table.classList.toggle('hide-unavailable', els.hide.checked);
@@ -391,6 +512,7 @@ function render() {
   const thead = table.createTHead();
   const hr = thead.insertRow();
   hr.append(cornerCell());
+  hr.append(sosHeader());
   for (const w of state.weeks) hr.append(headerCell(`Week ${w}`, w));
 
   const tbody = table.createTBody();
@@ -432,6 +554,7 @@ function render() {
     th.append(wrap);
     tr.append(th);
 
+    tr.append(sosCell(t));
     for (const w of state.weeks) tr.append(matchupCell(t, w));
   }
 }
@@ -569,6 +692,7 @@ function openDefense(def) {
 
 function applyScoring() {
   SCORING = PRESETS[state.scoringKey] ?? PRESETS.espn;
+  state.sos = null;   // recomputed for the new scoring
   ({ ranks: state.ranks, logs: state.logs, defLogs: state.defLogs, dstRanks: state.dstRanks, nflAvg: state.nflAvg } =
     computeRanks(state.data.results ?? {}, Object.keys(state.data.teams)));
   els.scoringNote.textContent = `${SCORING.label} default D/ST scoring`;
@@ -618,7 +742,7 @@ async function init() {
   state.data = data;
   state.storageKey = `dst-grid-${data.season}`;
   const abbrs = Object.keys(data.teams);
-  state.matchups = buildMatchups(data.schedule, data.currentWeek);
+  state.matchups = buildMatchups(data.schedule, Math.max(data.currentWeek, firstOpenWeek(data.schedule, data.currentWeek)));
   state.weeks = Object.keys(state.matchups).map(Number).sort((a, b) => a - b);
   state.planWeek = findPlanWeek(data.schedule, state.weeks);
   state.teams = abbrs.slice();
